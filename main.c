@@ -37,6 +37,8 @@ void ggmm(void);
 void ckxx(void);
 void ckjl(void);
 void jhsj(void);
+void jsms(void);
+void hsms(void);
 
 
 
@@ -338,21 +340,7 @@ void yhxx(void)
 		default:
 			glyms();
 	}
-    printf("是否继续？【1->是；2->返回上级】");
-
-    int i;
-    while(scanf("%d", &i) != 1)
-            {
-                printf("输入错误，请重新输入！");
-                while(getchar() != '\n');
-            }
-
-    if(i == 1)
-        yhxx();
-        else
-        glyms();
-    
-	return;
+    return;
 }
 
 
@@ -471,31 +459,17 @@ void sbxx(void)
 		default:
 			glyms();
 	}
-	 printf("是否继续？【1->是；2->返回上级】");
-
-    int i;
-    while(scanf("%d", &i) != 1)
-            {
-                printf("输入错误，请重新输入！");
-                while(getchar() != '\n');
-            }
-
-    if(i == 1)
-        sbxx();
-        else
-        glyms();
-    
 	return;
 }
 
 
 void jhxx(void)
 {
-	printf("已归还的记录如下：\n");
+	printf("\n已归还的记录如下：\n");
 
     show_history(history_list);
 
-    printf("未归还的记录如下：\n");
+    printf("\n未归还的记录如下：\n");
     show_record(record_list);
 
 
@@ -597,7 +571,7 @@ void ckxx(void)
 void ckjl(void)
 {
     record_node* l;
-    printf("未归还的记录如下：");
+    printf("未归还的记录如下：\n");
     l = record_list->next;
     int cnt = 0;
     const char* weekday[] = {"日", "一", "二", "三", "四", "五", "六"};
@@ -606,7 +580,7 @@ void ckjl(void)
 
     while(l != NULL && (strcmp(l->data.user_id, userid) == 0))
     {   cnt++;
-        printf("第%d条记录：",cnt);
+        printf("\n第%d条记录：\n",cnt);
         //printf("用户id：%s\n",l->data.user_id);
         printf("书本编号：%lu\n",l->data.ISBN);
         now_time = localtime(&l->data.borrow_time);
@@ -614,34 +588,63 @@ void ckjl(void)
         printf("归还时间：暂未归还。\n");
         printf("借阅数量：%d\n", l->data.borrow_num);
         printf("备注：%s\n",l->data.remake);
+        l = l->next;
     }
 
-    printf("一共%d条记录。",cnt);
+    printf("一共%d条记录。\n",cnt);
 
-    l = record_list->next;
-    printf("已归还的记录如下：");
+    l = history_list->next;
+    printf("\n已归还的记录如下：");
     cnt = 0;
     while(l != NULL && (strcmp(l->data.user_id, userid) == 0))
     {   
         cnt++;
-        printf("第%d条记录：",cnt);
+        printf("/n第%d条记录：",cnt);
         printf("用户id：%s\n",l->data.user_id);
         printf("书本编号：%lu\n",l->data.ISBN);
         now_time = localtime(&l->data.borrow_time);
         printf("借阅时间：%d年%d月%d日 %d:%02d:%02d 星期%s\n", now_time->tm_year + 1900, now_time->tm_mon + 1, now_time->tm_mday, now_time->tm_hour, now_time->tm_min, now_time->tm_sec, weekday[now_time->tm_wday]);
-        printf("归还时间：暂未归还。\n");
+        now_time = localtime(&l->data.repay_time);
+        printf("归还时间：%d年%d月%d日 %d:%02d:%02d 星期%s\n", now_time->tm_year + 1900, now_time->tm_mon + 1, now_time->tm_mday, now_time->tm_hour, now_time->tm_min, now_time->tm_sec, weekday[now_time->tm_wday]);
         printf("借阅数量：%d\n", l->data.borrow_num);
         printf("备注：%s\n",l->data.remake);
+        l = l->next;
     }
 
-    printf("一共%d条记录。",cnt);
+    printf("\n一共%d条记录。\n",cnt);
     return;
 
 }
 void jhsj(void)
 {   
-    unsigned long int ISBN;
-    printf("请输入书籍编号：");
+    
+    int cz;
+	while(1)
+	{  
+		printf("请输入操作代码【1->借书；2->还书；0->退出】：");
+		if(scanf("%d",&cz) && (1 == cz || 2 == cz || 0 == cz)) break;
+		printf("输入错误！！！请重新输入！！\n");
+		while(getchar() != '\n');
+	}
+
+    switch (cz)
+    {
+    case 1:
+        jsms();
+        break;
+    
+    case 2:
+        hsms();
+        break;
+        
+    
+    default:
+        break;
+    }
+
+
+
+    
     return;
 }
 
@@ -710,6 +713,7 @@ int manager_login(void)
                 fclose(fp);
 
                 printf("\n设置管理员用户名和密码成功！\n");
+                update_manager(m);
         }
         else
         {
@@ -720,7 +724,7 @@ int manager_login(void)
                         exit(1);
                 }
 
-                update_manager(m);
+                
         }
 
         printf("\n%s，您好，欢迎使用本系统！\n", m.manager_name); 
@@ -845,3 +849,135 @@ int user_login(char user_id[25], char pwd[33])
 
         printf("\n%s，您好，欢迎使用本系统！\n", l->data.user_name); 
 }
+
+
+void jsms(void)
+{
+    unsigned long int ISBN;
+    printf("请输入书籍编号：");
+    scanf("%lu", &ISBN);
+
+    books_node* bl = books_list->next;
+    
+    while(bl != NULL && bl->data.ISBN != ISBN)
+        bl = bl->next;
+
+        if(bl == NULL)
+        {
+            printf("编号错误，无此书籍，请查证后再试！\n");
+        }
+        else
+        {
+            int n;
+            printf("请输入借阅数目：");
+            scanf("%d", &n);
+
+            if(n > bl->data.margin)
+            {
+                printf("借阅失败：书本数目不足！（剩余：%d）\n", bl->data.margin);
+            }
+            else
+            {
+                
+                bl->data.margin -= n;
+
+                save_books();
+
+                record r;
+
+                r.ISBN = ISBN;
+                r.borrow_num = n;
+
+                time_t t;
+                time(&t);
+                r.borrow_time = t;
+                printf("请输入备注内容：");
+                scanf("%s",r.remake);
+                
+                strcpy(r.user_id, userid);
+
+                push_record(record_list, r);
+
+                printf("借阅成功！\n");
+
+                save_record();
+                
+
+            }
+        }
+        return;
+}
+
+
+void hsms(void)
+{
+    unsigned long int ISBN;
+    printf("请输入书籍编号：");
+    scanf("%lu", &ISBN);
+
+    books_node* bl = books_list->next;
+    record_node* rl = record_list->next;
+    
+    while(bl != NULL && bl->data.ISBN != ISBN)
+        bl = bl->next;
+
+    while(rl != NULL && rl->data.ISBN != ISBN)
+        rl = rl->next;
+
+        if(rl == NULL)
+        {
+            printf("归还失败，您暂时未此书籍，请查证后再试！\n");
+        }
+        else
+        {
+            int n;
+            printf("请输入归还数目：");
+            scanf("%d", &n);
+
+            if(n > rl->data.borrow_num)
+            {
+                printf("归还数目大于借阅数目！请确认后再尝试！（借阅数目：%d）\n", rl->data.borrow_num);
+            }
+            else
+            {
+                
+                rl->data.borrow_num -= n;
+
+                bl->data.margin += n;
+
+                save_books();
+
+                record r;
+
+                r.ISBN = ISBN;
+                r.repay_num = n;
+
+                time_t t;
+                time(&t);
+                r.repay_time = t;
+                
+                strcpy(r.remake, rl->data.remake);
+                r.borrow_num = rl->data.borrow_num;
+                r.borrow_time = rl->data.borrow_time;
+
+                strcpy(r.user_id, userid);
+
+                push_record(history_list, r);
+                save_history();
+                
+                printf("归还成功！\n");
+                
+                if(rl->data.borrow_num == 0)
+                {
+                    remove_record(record_list, userid, ISBN);
+                }
+
+                save_record();
+                
+
+            }
+        }
+    
+    return;
+}
+

@@ -9,6 +9,7 @@ typedef struct record
     unsigned long int borrow_time;
     unsigned long int repay_time;
     int borrow_num;
+    int repay_num;
     char remake[301];
 }record;
 
@@ -31,7 +32,7 @@ void save_record(void);
 void load_record(void);
 void save_history(void);
 void load_history(void);
-int remove_record(record_node* l1, record_node* l2, char id[25]);
+int remove_record(record_node* l1, char id[25], unsigned long int isbn);
 void show_history(record_node* l);
 void show_record(record_node* l);
 

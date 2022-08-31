@@ -144,18 +144,16 @@ void push_history(record_node* l, record data)
 }
 
 
-int remove_record(record_node* l1, record_node* l2, char id[25])
+int remove_record(record_node* l1, char id[25], unsigned long int isbn)
 {
     record_node* p = NULL;
 
-    while (l1->next != NULL && strcmp(l1->next->data.user_id, id) != 0)
+    while (l1->next != NULL && (strcmp(l1->next->data.user_id, id) != 0 || l1->data.ISBN == isbn))
     {
         l1 = l1->next;
     }
         
     if(l1->next == NULL) return 0;
-
-    push_history(l2, l1->data);
 
     p = l1->next;
     l1->next = p->next;
@@ -190,7 +188,7 @@ void show_history(record_node* l)
 
     while(l != NULL)
     {   cnt++;
-        printf("第%d条记录：",cnt);
+        printf("\n第%d条记录：",cnt);
         printf("用户id：%s\n",l->data.user_id);
         printf("书本编号：%lu\n",l->data.ISBN);
         now_time = localtime(&l->data.borrow_time);
@@ -199,6 +197,7 @@ void show_history(record_node* l)
         printf("归还时间：%d年%d月%d日 %d:%02d:%02d 星期%s\n", now_time->tm_year + 1900, now_time->tm_mon + 1, now_time->tm_mday, now_time->tm_hour, now_time->tm_min, now_time->tm_sec, weekday[now_time->tm_wday]);
         printf("借阅数量：%d\n", l->data.borrow_num);
         printf("备注：%s\n",l->data.remake);
+        l = l->next;
     }
 
     printf("一共%d条记录。\n",cnt);
@@ -217,7 +216,7 @@ void show_record(record_node* l)
 
     while(l != NULL)
     {   cnt++;
-        printf("第%d条记录：",cnt);
+        printf("\n第%d条记录：",cnt);
         printf("用户id：%s\n",l->data.user_id);
         printf("书本编号：%lu\n",l->data.ISBN);
         now_time = localtime(&l->data.borrow_time);
@@ -225,12 +224,16 @@ void show_record(record_node* l)
         printf("归还时间：暂未归还。\n");
         printf("借阅数量：%d\n", l->data.borrow_num);
         printf("备注：%s\n",l->data.remake);
+        l = l->next;
     }
 
     printf("一共%d条记录。\n",cnt);
     
     return;
 }
+
+
+
 
 
 
