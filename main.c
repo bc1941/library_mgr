@@ -5,10 +5,25 @@
 #include <time.h>
 #include "books_mgr.h"
 #include "record_mgr.h"
+#include "md5.h"
 #include "user_mgr.h"
 
 
-char userid[60];
+struct manager
+{
+    char manager_name[31];
+    char manager_pwd[33];
+};
+
+int manager_login(void);
+int is_first_login();
+void update_manager(struct manager m);
+int manager_login_check(const char* manager_name, const char* manager_pass);
+int user_login_check(const char* user_name, const char* user_pass, user u);
+int user_login(char user_id[25], char pwd[33]);
+
+
+char userid[25];
 
 
 void show(void);
@@ -22,6 +37,8 @@ void ggmm(void);
 void ckxx(void);
 void ckjl(void);
 void jhsj(void);
+
+
 
 int main()
 {
@@ -58,12 +75,32 @@ void show(void)
 	switch (ms)
 	{
 		case 1:
-			glyms();
+            {
+                
+
+                if(manager_login())
+                glyms();
+            }
+            
+			
 			break;
 
 		case 2:
-			dzms();
+        {
+            char userpwd[33];
+            printf("\n请登录！\n");
+            printf("用户名：");
+            scanf("%s", userid);
+            strcpy(userpwd, getpass("密码："));
+
+            if(user_login(userid, userpwd))
+            {
+                dzms();
+            }
+            
 			break;
+        }
+			
 		default:
 			return;
 	}
@@ -136,12 +173,77 @@ void glyxx(void)
 	switch (cz)
 	{
 		case 1:
-			printf("管理员用户名修改\n");
-			break;
+        {
+                FILE* fp = NULL;
 
-		case 2:
-			printf("管理员密码修改\n");
+            char mname[31];
+            struct manager m;
+			fp = fopen("manager_data", "rb");
+
+                fread(&m, sizeof(m),1,fp);
+
+                fclose(fp);
+
+                printf("请输入新的管理员名字：");
+                scanf("%s",mname);
+                
+                strcpy(m.manager_name, mname);
+
+                fp = fopen("manager_data", "wb");
+
+                if(fp == NULL)
+                {
+                        perror("open user_data fail");
+                }
+
+                fwrite(&m, sizeof(m), 1, fp);
+
+                fclose(fp);
+
+                printf("\n管理员名字修改成功！\n");
+            
 			break;
+        }
+		case 2:
+			{
+                FILE* fp = NULL;
+                struct manager m;
+                char mpwd[33];
+                char pwd_check[33];
+			while(1)
+                {
+                        strcpy(mpwd, getpass("管理员新的密码："));
+                        strcpy(pwd_check, getpass("再次输入管理员密码："));
+
+                        if(strcmp(mpwd, pwd_check) == 0) break;
+
+                        printf("\n两次输入的密码不一致，请重新输入！\n");
+                }
+                
+                fp = fopen("manager_data", "rb");
+
+                fread(&m, sizeof(m),1,fp);
+
+                fclose(fp);
+
+
+                md5_encode(mpwd, strlen(mpwd), m.manager_pwd);
+
+               fp = fopen("manager_data", "wb");
+
+                if(fp == NULL)
+                {
+                        perror("open user_data fail");
+                }
+
+                fwrite(&m, sizeof(m), 1, fp);
+
+                fclose(fp);
+
+                printf("\n管理员密码修改成功！\n");
+        
+			
+            }break;
 		default:
 			glyms();
 
@@ -452,28 +554,36 @@ void ggmm(void)
     user_node* l = NULL;
     l = user_list->next;
 
-    char pwd[31];
-    printf("请输入秘密：");
+    char pwd[33];
+    char pwd_check[33];
     
+    while(1)
+                {
+                        strcpy(pwd, getpass("新的密码："));
+                        strcpy(pwd_check, getpass("再次输入密码："));
 
-    while(strcmp(l->data.user_id, userid) == 0)
-    {
-        strcpy(l->data.user_pwd, pwd);
-    }
+                        if(strcmp(pwd, pwd_check) == 0) break;
 
+                        printf("\n两次输入的密码不一致，请重新输入！\n");
+                }
+
+                md5_encode(pwd, strlen(pwd), l->data.user_pwd);
+
+                save_user();
+    
     return;
 }
 
 
 void ckxx(void)
 {
-     user_node* l = NULL;
+    user_node* l = NULL;
     l = user_list->next;
     
 
         while (l != NULL)
         {
-            if(strstr(l->data.user_id, userid) != 0)
+            if(strcmp(l->data.user_id, userid) == 0)
             {
                 show_user(l->data);
             }
@@ -528,4 +638,210 @@ void ckjl(void)
     return;
 
 }
-void jhsj(void);
+void jhsj(void)
+{   
+    unsigned long int ISBN;
+    printf("请输入书籍编号：");
+    return;
+}
+
+
+int is_first_login()
+{
+        FILE* fp = fopen("manager_data", "rb");
+
+        if(fp == NULL) return 1;
+
+        fclose(fp);
+
+        return 0;
+}
+
+
+int manager_login(void)
+{
+        char manager_name[31], manager_pwd[33], manager_pwd_check[33];
+
+        struct manager m;
+
+        printf("\n请登录！\n");
+        printf("管理员用户名：");
+        scanf("%s", manager_name);
+        // 输入密码时没有回显
+        strcpy(manager_pwd, getpass("密码："));
+
+        if(is_first_login())
+        {
+                if(strcmp(manager_name, "manager") != 0 || strcmp(manager_pwd, "888888") != 0)
+                {
+                        printf("用户名或密码错误，登录失败！\n");
+                        exit(1);
+                }
+
+                // 首次登录成功
+                printf("\n为了系统安全，请重新设置管理员用户名和密码。\n");
+                printf("管理员用户名：");
+                scanf("%s", manager_name);
+                // 输入密码时没有回显
+
+                while(1)
+                {
+                        strcpy(manager_pwd, getpass("管理员密码："));
+                        strcpy(manager_pwd_check, getpass("再次输入管理员密码："));
+
+                        if(strcmp(manager_pwd, manager_pwd_check) == 0) break;
+
+                        printf("\n两次输入的密码不一致，请重新输入！\n");
+                }
+
+                strcpy(m.manager_name, manager_name);
+                
+                md5_encode(manager_pwd, strlen(manager_pwd), m.manager_pwd);
+
+                FILE* fp = fopen("manager_data", "wb");
+
+                if(fp == NULL)
+                {
+                        perror("open user_data fail");
+                }
+
+                fwrite(&m, sizeof(m), 1, fp);
+
+                fclose(fp);
+
+                printf("\n设置管理员用户名和密码成功！\n");
+        }
+        else
+        {
+                // 非首次登录
+                if(!manager_login_check(manager_name, manager_pwd))
+                {
+                        printf("用户名或密码错误，登录失败！\n");
+                        exit(1);
+                }
+
+                update_manager(m);
+        }
+
+        printf("\n%s，您好，欢迎使用本系统！\n", m.manager_name); 
+}
+
+
+void update_manager(struct manager m)
+{
+        FILE* fp = NULL;
+        
+        fp = fopen("manager_data", "wb");
+
+        if(fp == NULL)
+        {
+                perror("open user_data fail");
+        }
+        
+        fwrite(&m, sizeof(m), 1, fp);
+
+        fclose(fp);
+}
+
+
+
+int manager_login_check(const char* manager_name, const char* manager_pass)
+{
+        FILE* fp = NULL;
+        struct manager m;
+    
+        char manager_pass_md5[33];
+        int check_success = 0;
+
+        fp = fopen("manager_data", "rb");
+
+        if(fp == NULL) return 0;
+
+        md5_encode(manager_pass, strlen(manager_pass), manager_pass_md5);
+
+        while(fread(&m, sizeof(m), 1, fp) == 1)
+        {
+                if(strcmp(manager_name, m.manager_name) == 0 && strcmp(manager_pass_md5, m.manager_pwd) == 0)
+                {
+                        // 登录验证成功
+                        check_success = 1;
+                        break;
+                }
+        }
+
+        fclose(fp);
+
+        return check_success;
+}
+
+
+int user_login_check(const char* user_name, const char* user_pass, user u)
+{
+        FILE* fp = NULL;
+    
+        char user_pass_md5[33];
+        int check_success = 0;
+
+
+        md5_encode(user_pass, strlen(user_pass), user_pass_md5);
+
+                if(strcmp(user_name, u.user_id) == 0 && strcmp(user_pass_md5, u.user_pwd) == 0)
+                {
+                        // 登录验证成功
+                        check_success = 1;
+                        save_user();
+                }
+
+        return check_success;
+}
+
+
+int user_login(char user_id[25], char pwd[33])
+{
+    char pwd_check[33];
+    user_node* l = NULL;
+    l = user_list;
+    l = l ->next;
+
+    while(l != NULL && strcmp(l->data.user_id, user_id) != 0)
+    l = l->next;
+
+    if(l == NULL) return 0;
+
+    if(l->data.login == 0)
+        {   
+             if(!user_login_check(user_id, pwd, l->data))
+                {
+                        printf("用户名或密码错误，登录失败！\n");
+                        exit(1);
+                }
+                // 首次登录成功
+                printf("\n为了系统安全，请重新设置密码。\n");
+
+                while(1)
+                {
+                        strcpy(pwd, getpass("新的密码："));
+                        strcpy(pwd_check, getpass("再次输入密码："));
+
+                        if(strcmp(pwd, pwd_check) == 0) break;
+
+                        printf("\n两次输入的密码不一致，请重新输入！\n");
+                }
+
+                md5_encode(pwd, strlen(pwd), l->data.user_pwd);
+                l->data.login++;
+
+                save_user();
+        }
+    else
+        {
+                // 非首次登录
+                if(!user_login_check(user_id, pwd, l->data))
+                {
+                        printf("用户名或密码错误，登录失败！\n");
+                        exit(1);
+                }
+        }
+
+        printf("\n%s，您好，欢迎使用本系统！\n", l->data.user_name); 
+}

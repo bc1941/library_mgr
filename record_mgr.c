@@ -201,7 +201,7 @@ void show_history(record_node* l)
         printf("备注：%s\n",l->data.remake);
     }
 
-    printf("一共%d条记录。",cnt);
+    printf("一共%d条记录。\n",cnt);
     
     return;
 }
@@ -227,7 +227,7 @@ void show_record(record_node* l)
         printf("备注：%s\n",l->data.remake);
     }
 
-    printf("一共%d条记录。",cnt);
+    printf("一共%d条记录。\n",cnt);
     
     return;
 }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "user_mgr.h"
+#include "md5.h"
 
 
 user_node* user_list;
@@ -133,7 +134,8 @@ int update_user(user_node* l)
     int n = strlen(u.user_id);
     char b[25];
 
-    strcpy(u.user_pwd, &u.user_id[n - 6]);
+    md5_encode(&u.user_id[n - 6], strlen(&u.user_id[n - 6]),u.user_pwd);
+    u.login = 0;
 
     printf("用户名字：");
     scanf("%s", u.user_name);
@@ -250,7 +252,9 @@ void input_user(void)
     int n = strlen(u.user_id);
     char b[25];
 
-    strcpy(u.user_pwd, &u.user_id[n - 6]);
+    //char md5_pwd[33];
+    md5_encode(&u.user_id[n - 6], strlen(&u.user_id[n - 6]),u.user_pwd);
+    u.login = 0;
 
     printf("用户名字：");
     scanf("%s", u.user_name);

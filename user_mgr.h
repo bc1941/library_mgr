@@ -5,11 +5,12 @@
 typedef struct user
 {
     char user_id[25];
-    char user_pwd[31];
+    char user_pwd[33];
     char user_name[31];
     int user_sex;
     char user_phone_num[21];
     char user_address[101];
+    int login;
 }user;
 
 
